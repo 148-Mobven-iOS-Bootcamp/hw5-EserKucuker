@@ -15,8 +15,10 @@ class BannerSliderViewController: UIViewController {
     var currentPage: Double = 0.0
     
     let pageCount = 5
-    
-    
+    var timer = Timer()
+    var counter = 0
+ 
+    var offSet: CGFloat = 0
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -27,7 +29,25 @@ class BannerSliderViewController: UIViewController {
         
         configureScrollView() // Programmatically UIScrollView
         scrollView.contentSize.height = 1.0
+        scrollView.showsHorizontalScrollIndicator = false
+        timer = Timer.scheduledTimer(timeInterval: 10.0, target: self, selector: #selector(autoScroll),userInfo: nil, repeats: true)
     }
+    
+    
+    @objc func autoScroll() {
+           let totalPossibleOffset = CGFloat(pageCount - 1) * self.view.bounds.size.width
+           if offSet == totalPossibleOffset {
+               offSet = 0 // come back to the first image after the last image
+           }
+           else {
+               offSet += self.view.bounds.size.width
+           }
+           DispatchQueue.main.async() {
+               UIView.animate(withDuration: 0.0, delay: 0, options: UIView.AnimationOptions.curveLinear, animations: {
+                   self.scrollView.contentOffset.x = CGFloat(self.offSet)
+               }, completion: nil)
+           }
+       }
     
     @IBAction func pageControlDidChange(_ sender: UIPageControl) { // Made uiscrollView scroll when pagecontrol is changed.
         let current = sender.currentPage

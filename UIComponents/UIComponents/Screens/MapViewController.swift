@@ -22,7 +22,8 @@ class MapViewController: UIViewController {
     private var currentCoordinate: CLLocationCoordinate2D?
     private var destinationCoordinate: CLLocationCoordinate2D?
     private var index = 2
-    private var routes : [MKRoute] = []
+    private var routes : [MKPolyline] = []
+    
 
     func addLongGestureRecognizer() {
         let longPressGesture = UILongPressGestureRecognizer(target: self,
@@ -89,21 +90,32 @@ class MapViewController: UIViewController {
                 //print(error?.localizedDescription)
                 return
             }
-            self.routes = response?.routes ?? []
+           // self.routes = response?.routes ?? []
             
-            if (self.routes.count != 0){
+            guard let polyline: MKPolyline = response?.routes.first?.polyline else { return }
+            let rect = polyline.boundingMapRect
+            let region = MKCoordinateRegion(rect)
+            self.mapView.setRegion(region, animated: true)
             
+            for route in response?.routes ?? [] {
+                self.routes.append(route.polyline)
+            }
             
-                for route in stride(from: 0, through: self.routes.count-1, by: 1) {
-                    self.mapView.tag = route
-                    guard let polyline: MKPolyline = response?.routes[route].polyline else { return }
-                    self.mapView.addOverlay(polyline, level: .aboveLabels)
-                    let rect = polyline.boundingMapRect
-                    let region = MKCoordinateRegion(rect)
-                    self.mapView.setRegion(region, animated: true)
-                      
-                  }
-        }
+            self.mapView.addOverlays(self.routes, level: .aboveLabels)
+            
+//            if (self.routes.count != 0){
+//
+//
+//                for route in stride(from: 0, through: self.routes.count-1, by: 1) {
+//                    self.mapView.tag = route
+//                    guard let polyline: MKPolyline = response?.routes[route].polyline else { return }
+//                    self.mapView.addOverlay(polyline, level: .aboveLabels)
+//                    let rect = polyline.boundingMapRect
+//                    let region = MKCoordinateRegion(rect)
+//                    self.mapView.setRegion(region, animated: true)
+//
+//                  }
+//        }
             /*guard let polyline: MKPolyline = response?.routes.first?.polyline else { return }
             self.mapView.addOverlay(polyline, level: .aboveLabels)
 
@@ -149,10 +161,13 @@ extension MapViewController: CLLocationManagerDelegate {
 extension MapViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         let renderer = MKPolylineRenderer(overlay: overlay)
-        let eser = mapView.tag
-        if (eser == 0) {
+        
+       var myroute = mapView.overlays.count
+
+        if (myroute == 1) {
             renderer.strokeColor = .systemBlue
             index += 1
+            
         } else {
             renderer.strokeColor = .magenta
         }
