@@ -21,6 +21,7 @@ class MapViewController: UIViewController {
 
     private var currentCoordinate: CLLocationCoordinate2D?
     private var destinationCoordinate: CLLocationCoordinate2D?
+    private var index = 0
 
     func addLongGestureRecognizer() {
         let longPressGesture = UILongPressGestureRecognizer(target: self,
@@ -87,13 +88,26 @@ class MapViewController: UIViewController {
                 print(error?.localizedDescription)
                 return
             }
-
-            guard let polyline: MKPolyline = response?.routes.first?.polyline else { return }
+            let routes : [MKRoute] = response?.routes ?? []
+            
+            if (routes.count != 0){
+            
+            
+                for route in stride(from: 0, through: routes.count-1, by: 1) {
+                 
+                    guard let polyline: MKPolyline = response?.routes[route].polyline else { return }
+                      self.mapView.addOverlay(polyline, level: .aboveLabels)
+                      let rect = polyline.boundingMapRect
+                      let region = MKCoordinateRegion(rect)
+                      self.mapView.setRegion(region, animated: true)
+                  }
+        }
+            /*guard let polyline: MKPolyline = response?.routes.first?.polyline else { return }
             self.mapView.addOverlay(polyline, level: .aboveLabels)
 
             let rect = polyline.boundingMapRect
             let region = MKCoordinateRegion(rect)
-            self.mapView.setRegion(region, animated: true)
+            self.mapView.setRegion(region, animated: true)*/
 
             //Odev 1 navigate buttonlari ile diger route'lar gosterilmelidir.
         }
@@ -128,7 +142,13 @@ extension MapViewController: CLLocationManagerDelegate {
 extension MapViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         let renderer = MKPolylineRenderer(overlay: overlay)
-        renderer.strokeColor = .magenta
+ 
+        if (index == 0) {
+            renderer.strokeColor = .systemBlue
+            index += 1
+        } else {
+            renderer.strokeColor = .magenta
+        }
         renderer.lineWidth = 8
         return renderer
     }
