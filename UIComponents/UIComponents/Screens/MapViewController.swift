@@ -21,7 +21,8 @@ class MapViewController: UIViewController {
 
     private var currentCoordinate: CLLocationCoordinate2D?
     private var destinationCoordinate: CLLocationCoordinate2D?
-    private var index = 0
+    private var index = 2
+    private var routes : [MKRoute] = []
 
     func addLongGestureRecognizer() {
         let longPressGesture = UILongPressGestureRecognizer(target: self,
@@ -85,21 +86,22 @@ class MapViewController: UIViewController {
             guard error == nil else {
                 //log error
                 //show error
-                print(error?.localizedDescription)
+                //print(error?.localizedDescription)
                 return
             }
-            let routes : [MKRoute] = response?.routes ?? []
+            self.routes = response?.routes ?? []
             
-            if (routes.count != 0){
+            if (self.routes.count != 0){
             
             
-                for route in stride(from: 0, through: routes.count-1, by: 1) {
-                 
+                for route in stride(from: 0, through: self.routes.count-1, by: 1) {
+                    self.mapView.tag = route
                     guard let polyline: MKPolyline = response?.routes[route].polyline else { return }
-                      self.mapView.addOverlay(polyline, level: .aboveLabels)
-                      let rect = polyline.boundingMapRect
-                      let region = MKCoordinateRegion(rect)
-                      self.mapView.setRegion(region, animated: true)
+                    self.mapView.addOverlay(polyline, level: .aboveLabels)
+                    let rect = polyline.boundingMapRect
+                    let region = MKCoordinateRegion(rect)
+                    self.mapView.setRegion(region, animated: true)
+                      
                   }
         }
             /*guard let polyline: MKPolyline = response?.routes.first?.polyline else { return }
@@ -112,7 +114,12 @@ class MapViewController: UIViewController {
             //Odev 1 navigate buttonlari ile diger route'lar gosterilmelidir.
         }
     }
+ 
 
+    @IBAction func reverseBarButtonTapped(_ sender: UIBarButtonItem) {
+     
+        
+    }
     private lazy var locationManager: CLLocationManager = {
         let locationManager = CLLocationManager()
         locationManager.delegate = self
@@ -142,8 +149,8 @@ extension MapViewController: CLLocationManagerDelegate {
 extension MapViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         let renderer = MKPolylineRenderer(overlay: overlay)
- 
-        if (index == 0) {
+        let eser = mapView.tag
+        if (eser == 0) {
             renderer.strokeColor = .systemBlue
             index += 1
         } else {
@@ -152,4 +159,5 @@ extension MapViewController: MKMapViewDelegate {
         renderer.lineWidth = 8
         return renderer
     }
+    
 }
