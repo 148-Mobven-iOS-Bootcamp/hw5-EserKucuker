@@ -15,7 +15,11 @@ class BannerSliderViewController: UIViewController {
     var currentPage: Double = 0.0
     
     let pageCount = 5
-    var timer = Timer()
+    var timer : Timer? = nil {
+           willSet {
+               timer?.invalidate()
+           }
+       }
     var counter = 0
  
     var offSet: CGFloat = 0
@@ -30,7 +34,7 @@ class BannerSliderViewController: UIViewController {
         configureScrollView() // Programmatically UIScrollView
         scrollView.contentSize.height = 1.0
         scrollView.showsHorizontalScrollIndicator = false
-        timer = Timer.scheduledTimer(timeInterval: 10.0, target: self, selector: #selector(autoScroll),userInfo: nil, repeats: true)
+        timer = setTimer()
     }
     
     
@@ -50,9 +54,27 @@ class BannerSliderViewController: UIViewController {
        }
     
     @IBAction func pageControlDidChange(_ sender: UIPageControl) { // Made uiscrollView scroll when pagecontrol is changed.
+        stopTimer()
         let current = sender.currentPage
         scrollView.setContentOffset(CGPoint(x: CGFloat(current) * view.frame.size.width, y: 0), animated: true)
-        
+        startTimer()
+    }
+    
+    private func startTimer() {
+        stopTimer()
+        guard self.timer == nil else { return }
+        self.timer = setTimer()
+    }
+
+    private func stopTimer() {
+        guard timer != nil else { return }
+        timer?.invalidate()
+        timer = nil
+    }
+    
+    private func setTimer()-> Timer {
+        let time = Timer.scheduledTimer(timeInterval: 10, target: self, selector: #selector(self.autoScroll), userInfo: nil, repeats: true)
+        return time
     }
   
     private func configureScrollView(){
@@ -78,13 +100,14 @@ extension BannerSliderViewController: UIScrollViewDelegate{
     }
     
     func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
-        
+        stopTimer()
         if currentPage <= 0.0 && velocity.x < 0 { //scrollview slide head to end.
             targetContentOffset[0].x = CGFloat(4) * view.frame.size.width //change target point
         }
         if currentPage >= 4.0 && velocity.x > 0{ //scrollview slide end to head.
             targetContentOffset[0].x = CGFloat(0) * view.frame.size.width
         }
+        startTimer()
     }
 }
 extension Color {
@@ -94,3 +117,5 @@ extension Color {
                      blue: .random(in: 0...1))
     }
 }
+
+
