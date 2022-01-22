@@ -9,39 +9,48 @@ import UIKit
 import MapKit
 
 class MapViewController: UIViewController {
-
+    
     @IBOutlet weak var mapView: MKMapView!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         checkLocationPermission()
         addLongGestureRecognizer()
     }
-
+    
     private var currentCoordinate: CLLocationCoordinate2D?
     private var destinationCoordinate: CLLocationCoordinate2D?
-    private var index = 2
     private var routes : [MKPolyline] = []
+    private var render : [MKPolylineRenderer] = []
+    private var currentIndex = 0
     
-
+    
     func addLongGestureRecognizer() {
         let longPressGesture = UILongPressGestureRecognizer(target: self,
                                                             action: #selector(handleLongPressGesture(_ :)))
         self.view.addGestureRecognizer(longPressGesture)
     }
-
+    
     @objc func handleLongPressGesture(_ sender: UILongPressGestureRecognizer) {
+        
+        let overlays = mapView.overlays
+        mapView.removeOverlays(overlays)
+        
+        let position = mapView.annotations
+        mapView.removeAnnotations(position)
+        
         let point = sender.location(in: mapView)
         let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
         destinationCoordinate = coordinate
-
+        
         let annotation = MKPointAnnotation()
         annotation.coordinate = coordinate
         annotation.title = "Pinned"
         mapView.addAnnotation(annotation)
+        self.routes = []
     }
-
+    
     func checkLocationPermission() {
         switch self.locationManager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse, .authorized:
@@ -56,33 +65,33 @@ class MapViewController: UIViewController {
             fatalError()
         }
     }
-
+    
     @IBAction func showCurrentLocationTapped(_ sender: UIButton) {
         locationManager.requestLocation()
     }
-
+    
     @IBAction func drawRouteButtonTapped(_ sender: UIButton) {
         guard let currentCoordinate = currentCoordinate,
               let destinationCoordinate = destinationCoordinate else {
                   // log
                   // alert
-            return
-        }
-
+                  return
+              }
+        
         let sourcePlacemark = MKPlacemark(coordinate: currentCoordinate)
         let source = MKMapItem(placemark: sourcePlacemark)
-
+        
         let destinationPlacemark = MKPlacemark(coordinate: destinationCoordinate)
         let destination = MKMapItem(placemark: destinationPlacemark)
-
+        
         let directionRequest = MKDirections.Request()
         directionRequest.source = source
         directionRequest.destination = destination
         directionRequest.transportType = .automobile
         directionRequest.requestsAlternateRoutes = true
-
+        
         let direction = MKDirections(request: directionRequest)
-
+        
         direction.calculate { response, error in
             guard error == nil else {
                 //log error
@@ -90,48 +99,61 @@ class MapViewController: UIViewController {
                 //print(error?.localizedDescription)
                 return
             }
-           // self.routes = response?.routes ?? []
             
-            guard let polyline: MKPolyline = response?.routes.first?.polyline else { return }
-            let rect = polyline.boundingMapRect
-            let region = MKCoordinateRegion(rect)
-            self.mapView.setRegion(region, animated: true)
             
-            for route in response?.routes ?? [] {
+            guard let routeData = response else { return }
+            let sortedRoutes = routeData.routes.sorted(by: { $0.distance > $1.distance })
+            
+            for route in sortedRoutes {
                 self.routes.append(route.polyline)
+                self.mapView.addOverlay(route.polyline)
+                self.mapView.setVisibleMapRect(route.polyline.boundingMapRect, animated: true)
             }
             
-            self.mapView.addOverlays(self.routes, level: .aboveLabels)
             
-//            if (self.routes.count != 0){
-//
-//
-//                for route in stride(from: 0, through: self.routes.count-1, by: 1) {
-//                    self.mapView.tag = route
-//                    guard let polyline: MKPolyline = response?.routes[route].polyline else { return }
-//                    self.mapView.addOverlay(polyline, level: .aboveLabels)
-//                    let rect = polyline.boundingMapRect
-//                    let region = MKCoordinateRegion(rect)
-//                    self.mapView.setRegion(region, animated: true)
-//
-//                  }
-//        }
-            /*guard let polyline: MKPolyline = response?.routes.first?.polyline else { return }
-            self.mapView.addOverlay(polyline, level: .aboveLabels)
-
-            let rect = polyline.boundingMapRect
-            let region = MKCoordinateRegion(rect)
-            self.mapView.setRegion(region, animated: true)*/
-
-            //Odev 1 navigate buttonlari ile diger route'lar gosterilmelidir.
         }
     }
- 
-
-    @IBAction func reverseBarButtonTapped(_ sender: UIBarButtonItem) {
-     
+    
+    func setRoute(){
+        
+        
+        for item in self.render {
+            if self.render.firstIndex(of: item) == currentIndex {
+                item.strokeColor = .blue
+            }
+            else{
+                item.strokeColor = .gray
+            }
+            
+        }
+        
         
     }
+    
+    private var routeIndex = 0
+    @IBAction func reverseBarButtonTapped(_ sender: UIBarButtonItem){
+        
+        if(self.currentIndex > 0){
+            self.currentIndex -= 1
+            
+        }else{
+            self.currentIndex = self.routes.count - 1
+        }
+        
+        setRoute()
+        
+    }
+    
+    @IBAction func forwardBarButtonTapped(_ sender : UIBarButtonItem){
+        
+        if(self.currentIndex < self.routes.count - 1 ){
+            self.currentIndex += 1
+        }else{
+            self.currentIndex = 0
+        }
+        setRoute()
+    }
+    
     private lazy var locationManager: CLLocationManager = {
         let locationManager = CLLocationManager()
         locationManager.delegate = self
@@ -145,34 +167,39 @@ extension MapViewController: CLLocationManagerDelegate {
         currentCoordinate = coordinate
         print("latitude: \(coordinate.latitude)")
         print("longitude: \(coordinate.longitude)")
-
+        
         mapView.setCenter(coordinate, animated: true)
     }
-
+    
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         checkLocationPermission()
     }
-
+    
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-
+        
     }
 }
 
 extension MapViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-        let renderer = MKPolylineRenderer(overlay: overlay)
+        let polyline = overlay as! MKPolyline
         
-       var myroute = mapView.overlays.count
-
-        if (myroute == 1) {
-            renderer.strokeColor = .systemBlue
-            index += 1
+        let renderer = MKPolylineRenderer(polyline: polyline)
+        self.render.append(renderer)
+                
+        for item in self.render {
+            if self.render.firstIndex(of: item) == currentIndex {
+                item.strokeColor = .blue
+            }
+            else{
+                item.strokeColor = .gray
+            }
             
-        } else {
-            renderer.strokeColor = .magenta
         }
-        renderer.lineWidth = 8
+
+        
         return renderer
     }
+    
     
 }

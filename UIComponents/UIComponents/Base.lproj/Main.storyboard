@@ -352,7 +352,11 @@
                                             <action selector="reverseBarButtonTapped:" destination="m2C-yw-bgz" id="O3e-Kt-Ah4"/>
                                         </connections>
                                     </barButtonItem>
-                                    <barButtonItem title="Item" image="arrowshape.turn.up.right.fill" catalog="system" id="bo8-Zf-rxQ"/>
+                                    <barButtonItem title="Item" image="arrowshape.turn.up.right.fill" catalog="system" id="bo8-Zf-rxQ">
+                                        <connections>
+                                            <action selector="forwardBarButtonTapped:" destination="m2C-yw-bgz" id="qat-d5-ArN"/>
+                                        </connections>
+                                    </barButtonItem>
                                     <barButtonItem style="plain" id="98n-2U-gPW">
                                         <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" id="OVB-6K-5e7">
                                             <rect key="frame" x="144" y="10" width="107.5" height="34.5"/>
