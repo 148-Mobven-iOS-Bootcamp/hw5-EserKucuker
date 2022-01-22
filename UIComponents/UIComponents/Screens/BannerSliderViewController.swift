@@ -31,7 +31,7 @@ class BannerSliderViewController: UIViewController {
         pageControl.numberOfPages = pageCount
         pageControl.addTarget(self, action: #selector(pageControlDidChange), for: .valueChanged)
         
-        configureScrollView() // Programmatically UIScrollView
+        configureScrollView()
         scrollView.contentSize.height = 1.0
         scrollView.showsHorizontalScrollIndicator = false
         timer = setTimer()
@@ -41,7 +41,7 @@ class BannerSliderViewController: UIViewController {
     @objc func autoScroll() {
            let totalPossibleOffset = CGFloat(pageCount - 1) * self.view.bounds.size.width
            if offSet == totalPossibleOffset {
-               offSet = 0 // come back to the first image after the last image
+               offSet = 0
            }
            else {
                offSet += self.view.bounds.size.width
@@ -53,7 +53,7 @@ class BannerSliderViewController: UIViewController {
            }
        }
     
-    @IBAction func pageControlDidChange(_ sender: UIPageControl) { // Made uiscrollView scroll when pagecontrol is changed.
+    @IBAction func pageControlDidChange(_ sender: UIPageControl) {
         stopTimer()
         let current = sender.currentPage
         scrollView.setContentOffset(CGPoint(x: CGFloat(current) * view.frame.size.width, y: 0), animated: true)
@@ -83,7 +83,7 @@ class BannerSliderViewController: UIViewController {
         
         scrollView.isPagingEnabled = true
         
-        for index in 0..<pageCount{ //add content to scrollView.
+        for index in 0..<pageCount{
             let page = UIView(frame: CGRect(x: CGFloat(index) * view.frame.size.width, y: 0, width: view.frame.size.width, height: scrollView.frame.size.height))
             page.backgroundColor = .random
             scrollView.addSubview(page)
@@ -94,7 +94,7 @@ class BannerSliderViewController: UIViewController {
 
 extension BannerSliderViewController: UIScrollViewDelegate{
     
-    func scrollViewDidScroll(_ scrollView: UIScrollView) { //change pagecontrol when scrollview did scroll
+    func scrollViewDidScroll(_ scrollView: UIScrollView) { 
         currentPage = Double(scrollView.contentOffset.x / scrollView.frame.size.width)
         pageControl.currentPage = Int(currentPage)
     }
